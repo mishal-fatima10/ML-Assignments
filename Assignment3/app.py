@@ -18,26 +18,70 @@ BASE = Path(__file__).parent
 st.set_page_config(page_title="Diamond Price Predictor", page_icon="💎", layout="centered")
 
 
+DEFAULT_INFO = {
+    "best_algorithm": "XGBoost",
+    "cv_folds": 10,
+    "n_diamonds": 53794,
+    "mean_rmse": 534.76,
+    "std_rmse": 20.76,
+    "mean_mae": 273.05,
+    "mean_r2": 0.982,
+    "ranges": {
+        "carat": [0.2, 5.01], "depth": [43.0, 79.0], "table": [43.0, 95.0],
+        "x": [3.73, 10.74], "y": [3.68, 58.9], "z": [1.07, 31.8],
+    },
+    "categories": {
+        "cut": ["Fair", "Good", "Very Good", "Premium", "Ideal"],
+        "color": ["D", "E", "F", "G", "H", "I", "J"],
+        "clarity": ["I1", "SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF"],
+    },
+}
+
+
 @st.cache_resource
 def load_model():
-    with open(BASE / "diamond_price_model.pkl", "rb") as f:
+    path = BASE / "diamond_price_model.pkl"
+    if not path.exists():
+        return None
+    with open(path, "rb") as f:
         return pickle.load(f)
 
 
 @st.cache_data
 def load_info():
-    with open(BASE / "model_info.json") as f:
-        return json.load(f)
+    """Model metadata. Falls back to built-in defaults if model_info.json is missing."""
+    path = BASE / "model_info.json"
+    if path.exists():
+        try:
+            with open(path) as f:
+                return {**DEFAULT_INFO, **json.load(f)}
+        except Exception:
+            pass
+    return DEFAULT_INFO
 
 
 @st.cache_data
 def load_results():
-    return pd.read_csv(BASE / "cv_results.csv")
+    """Cross-validation table. Returns None if cv_results.csv is missing."""
+    path = BASE / "cv_results.csv"
+    if path.exists():
+        try:
+            return pd.read_csv(path)
+        except Exception:
+            pass
+    return None
 
 
 model = load_model()
 info = load_info()
 results = load_results()
+
+if model is None:
+    st.error(
+        "The trained model file `diamond_price_model.pkl` was not found. "
+        "Upload it to the same folder as `app.py` in the GitHub repository."
+    )
+    st.stop()
 
 CUT = info["categories"]["cut"]
 COLOR = info["categories"]["color"]
@@ -106,19 +150,21 @@ else:
     st.write("Fill in the form above and press **Predict price**.")
 
 # ---------------------------------------------------------------- model comparison
-with st.expander("How was this model chosen? (5-algorithm comparison)"):
-    st.write(
-        "Five regression algorithms were compared on the **full dataset** with **10-fold cross validation**. "
-        "The one with the lowest mean RMSE was trained on all the data and deployed here."
-    )
-    table_view = results[["Rank", "Algorithm", "Mean RMSE ($)", "Mean MAE ($)", "Mean R2"]].copy()
-    st.dataframe(
-        table_view.style.format({"Mean RMSE ($)": "${:,.0f}", "Mean MAE ($)": "${:,.0f}", "Mean R2": "{:.4f}"}),
-        hide_index=True,
-        width="stretch",
-    )
-    st.bar_chart(results.set_index("Algorithm")["Mean RMSE ($)"], horizontal=True)
-    st.caption("Lower RMSE is better.")
+if results is not None:
+    with st.expander("How was this model chosen? (5-algorithm comparison)"):
+        st.write(
+            "Five regression algorithms were compared on the **full dataset** with **10-fold cross validation**. "
+            "The one with the lowest mean RMSE was trained on all the data and deployed here."
+        )
+        table_view = results[["Rank", "Algorithm", "Mean RMSE ($)", "Mean MAE ($)", "Mean R2"]].copy()
+        st.dataframe(
+            table_view.style.format({"Mean RMSE ($)": "${:,.0f}", "Mean MAE ($)": "${:,.0f}", "Mean R2": "{:.4f}"}),
+            hide_index=True,
+            width="stretch",
+        )
+        st.bar_chart(results.set_index("Algorithm")["Mean RMSE ($)"], horizontal=True)
+        st.caption("Lower RMSE is better.")
+
 
 st.divider()
 st.caption("AIC354 Machine Learning Fundamentals · Assignment 3 · Mishal Fatima (SP24-BCS-067) · COMSATS University Islamabad, Lahore Campus")

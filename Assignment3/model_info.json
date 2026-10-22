@@ -1,0 +1,63 @@
+{
+  "best_algorithm": "XGBoost",
+  "cv_folds": 10,
+  "n_diamonds": 53794,
+  "mean_rmse": 534.75529570503,
+  "std_rmse": 20.76138316752393,
+  "mean_mae": 273.052197265625,
+  "mean_r2": 0.9820028662681579,
+  "ranges": {
+    "carat": [
+      0.2,
+      5.01
+    ],
+    "depth": [
+      43.0,
+      79.0
+    ],
+    "table": [
+      43.0,
+      95.0
+    ],
+    "x": [
+      3.73,
+      10.74
+    ],
+    "y": [
+      3.68,
+      58.9
+    ],
+    "z": [
+      1.07,
+      31.8
+    ]
+  },
+  "categories": {
+    "cut": [
+      "Fair",
+      "Good",
+      "Very Good",
+      "Premium",
+      "Ideal"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "clarity": [
+      "I1",
+      "SI2",
+      "SI1",
+      "VS2",
+      "VS1",
+      "VVS2",
+      "VVS1",
+      "IF"
+    ]
+  }
+}
